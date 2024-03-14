@@ -1,46 +1,61 @@
-#include <raylib.h>
+#include <limits.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-#define POINT_COUNT 10
+#define POINT_COUNT 20
+
+typedef struct {
+    uint8_t r;
+    uint8_t g;
+    uint8_t b;
+} Color;
 
 typedef struct {
     int x;
     int y;
+    Color color;
 } Position;
 
-void generatePoints(Position points[], int max_x, int max_y) {
-    for (int i = 0; i < POINT_COUNT; i++) {
-        points[i].x = random() % max_x;
-        points[i].y = random() % max_y;
-    }
-}
-
 int main(void) {
-    const int screenWidth = 640;
-    const int screenHeight = 360;
+    const int width = 1280;
+    const int height = 720;
 
-    InitWindow(screenWidth, screenHeight, "Voronoi");
-    SetTargetFPS(60);
-
-    // Generate Points
     Position points[POINT_COUNT];
-    generatePoints(points, screenWidth, screenHeight);
-
-    while (!WindowShouldClose()) {
-        if (IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_Q))
-            CloseWindow();
-        if (IsKeyPressed(KEY_SPACE))
-            generatePoints(points, screenWidth, screenHeight);
-        BeginDrawing();
-        ClearBackground(RAYWHITE);
-        for (int i = 0; i < POINT_COUNT; i++) {
-            // DrawPixel(points[i].x, points[i].y, BLACK);
-            DrawRectangle(points[i].x, points[i].y, 5, 5, BLACK);
-        }
-        EndDrawing();
+    for (int i = 0; i < POINT_COUNT; i++) {
+        points[i].x = random() % width;
+        points[i].y = random() % height;
+        points[i].color.r = random() % 255;
+        points[i].color.g = random() % 255;
+        points[i].color.b = random() % 255;
     }
 
-    CloseWindow();
+    FILE *stream = fopen("output.ppm", "w");
+    fprintf(stream, "P3\n");
+    fprintf(stream, "%d %d\n", width, height);
+    fprintf(stream, "255\n");
+
+    for (int y = 0; y < height; y++) {
+        for (int x = 0; x < width; x++) {
+            Position closestPoint;
+            int minDistance = INT_MAX;
+            for (int k = 0; k < POINT_COUNT; k++) {
+                int distanceSquared = ((points[k].x - x) * (points[k].x - x)) +
+                                      ((points[k].y - y) * (points[k].y - y));
+                if (distanceSquared < minDistance) {
+                    minDistance = distanceSquared;
+                    closestPoint = points[k];
+                }
+            }
+            if (closestPoint.x == x && closestPoint.y == y) {
+                fprintf(stream, "0 0 0\n");
+            } else {
+                fprintf(stream, "%d %d %d\n", closestPoint.color.r,
+                        closestPoint.color.g, closestPoint.color.b);
+            }
+        }
+    }
+
+    fclose(stream);
     return 0;
 }
