@@ -4,6 +4,7 @@
 #include <stdlib.h>
 
 #define POINT_COUNT 20
+#define MODE 0
 
 typedef struct {
     uint8_t r;
@@ -18,8 +19,8 @@ typedef struct {
 } Position;
 
 int main(void) {
-    const int width = 1280;
-    const int height = 720;
+    const int width = 1920;
+    const int height = 1080;
 
     Position points[POINT_COUNT];
     for (int i = 0; i < POINT_COUNT; i++) {
@@ -39,20 +40,23 @@ int main(void) {
         for (int x = 0; x < width; x++) {
             Position closestPoint;
             int minDistance = INT_MAX;
+            int distance = 0;
             for (int k = 0; k < POINT_COUNT; k++) {
-                int distanceSquared = ((points[k].x - x) * (points[k].x - x)) +
-                                      ((points[k].y - y) * (points[k].y - y));
-                if (distanceSquared < minDistance) {
-                    minDistance = distanceSquared;
+                if (MODE == 0) {
+                    distance = ((points[k].x - x) * (points[k].x - x)) +
+                               ((points[k].y - y) * (points[k].y - y));
+                } else if (MODE == 1) {
+                    distance = abs(points[k].x - x) + abs(points[k].y - y);
+                }
+                if (distance < minDistance) {
+                    minDistance = distance;
                     closestPoint = points[k];
                 }
             }
-            if (closestPoint.x == x && closestPoint.y == y) {
-                fprintf(stream, "0 0 0\n");
-            } else {
-                fprintf(stream, "%d %d %d\n", closestPoint.color.r,
-                        closestPoint.color.g, closestPoint.color.b);
-            }
+
+            // Printing the points is too hard so I'm not doing that
+            fprintf(stream, "%d %d %d\n", closestPoint.color.r,
+                    closestPoint.color.g, closestPoint.color.b);
         }
     }
 
